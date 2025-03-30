@@ -45,6 +45,11 @@
         button:hover {
             background-color: #218838;
         }
+        select {
+            display: block;
+            width: 100%;
+            height: auto;
+        }
     </style>
 </head>
 <body>
@@ -74,7 +79,7 @@
                 .then(response => response.text())
                 .then(data => {
                     const daysSelect = document.getElementById('days');
-                    const meals = data.split('\\n');
+                    const meals = data.split('\n');
                     meals.forEach(meal => {
                         const option = document.createElement('option');
                         option.value = meal;
