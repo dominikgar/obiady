@@ -68,7 +68,7 @@
             </select>
 
             <label for="payment">Kwota do zapłaty:</label>
-            <input type="number" id="payment" name="payment" required>
+            <input type="number" id="payment" name="payment" readonly>
 
             <button type="submit">Zamów</button>
         </form>
@@ -85,6 +85,13 @@
                         option.value = meal;
                         option.textContent = meal;
                         daysSelect.appendChild(option);
+                    });
+
+                    // Dodaj event listener do obliczania całkowitej kwoty
+                    daysSelect.addEventListener('change', function() {
+                        const selectedOptions = Array.from(daysSelect.selectedOptions);
+                        const totalAmount = selectedOptions.length * 13.50; // Zakładając, że każdy posiłek kosztuje 13.50 PLN
+                        document.getElementById('payment').value = totalAmount.toFixed(2);
                     });
                 })
                 .catch(error => console.error('Błąd wczytywania menu:', error));
