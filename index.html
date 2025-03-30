@@ -117,7 +117,7 @@
                 const name = document.getElementById('name').value;
                 const className = document.getElementById('class').value;
                 const selectedCheckboxes = Array.from(document.querySelectorAll('#days input[type="checkbox"]:checked'));
-                const selectedDays = selectedCheckboxes.map(checkbox => checkbox.value).join(', ');
+                const selectedDays = selectedCheckboxes.map(checkbox => checkbox.value.split(' ')).join(', ');
                 const totalAmount = document.getElementById('payment').value;
 
                 // Utwórz podsumowanie zamówienia
