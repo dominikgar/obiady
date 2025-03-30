@@ -28,11 +28,18 @@
         label {
             margin-bottom: 10px;
         }
-        input, select {
+        input[type="text"], input[type="number"] {
             padding: 10px;
             margin-bottom: 20px;
             border: 1px solid #ccc;
             border-radius: 5px;
+        }
+        .checkbox-group {
+            display: flex;
+            flex-direction: column;
+        }
+        .checkbox-group label {
+            margin-bottom: 5px;
         }
         button {
             padding: 10px;
@@ -44,11 +51,6 @@
         }
         button:hover {
             background-color: #218838;
-        }
-        select {
-            display: block;
-            width: 100%;
-            height: auto;
         }
     </style>
 </head>
@@ -62,10 +64,10 @@
             <label for="class">Klasa:</label>
             <input type="text" id="class" name="class" required>
 
-            <label for="days">Dni, w które dziecko je:</label>
-            <select id="days" name="days" multiple required>
-                <!-- Opcje będą dodane dynamicznie przez JavaScript -->
-            </select>
+            <label>Dni, w które dziecko je:</label>
+            <div class="checkbox-group" id="days">
+                <!-- Checkboxy będą dodane dynamicznie przez JavaScript -->
+            </div>
 
             <label for="payment">Kwota do zapłaty:</label>
             <input type="number" id="payment" name="payment" readonly>
@@ -78,19 +80,25 @@
             fetch('menu.txt')
                 .then(response => response.text())
                 .then(data => {
-                    const daysSelect = document.getElementById('days');
+                    const daysContainer = document.getElementById('days');
                     const meals = data.split('\n');
                     meals.forEach(meal => {
-                        const option = document.createElement('option');
-                        option.value = meal;
-                        option.textContent = meal;
-                        daysSelect.appendChild(option);
+                        const checkbox = document.createElement('input');
+                        checkbox.type = 'checkbox';
+                        checkbox.name = 'days';
+                        checkbox.value = meal;
+
+                        const label = document.createElement('label');
+                        label.appendChild(checkbox);
+                        label.appendChild(document.createTextNode(meal));
+
+                        daysContainer.appendChild(label);
                     });
 
                     // Dodaj event listener do obliczania całkowitej kwoty
-                    daysSelect.addEventListener('change', function() {
-                        const selectedOptions = Array.from(daysSelect.selectedOptions);
-                        const totalAmount = selectedOptions.length * 13.50; // Zakładając, że każdy posiłek kosztuje 13.50 PLN
+                    daysContainer.addEventListener('change', function() {
+                        const selectedCheckboxes = Array.from(daysContainer.querySelectorAll('input[type="checkbox"]:checked'));
+                        const totalAmount = selectedCheckboxes.length * 13.50; // Zakładając, że każdy posiłek kosztuje 13.50 PLN
                         document.getElementById('payment').value = totalAmount.toFixed(2);
                     });
                 })
