@@ -74,6 +74,12 @@
 
             <button type="submit">Zamów</button>
         </form>
+
+        <!-- Podsumowanie zamówienia -->
+        <div id="summary" style="display:none;">
+            <h2>Podsumowanie Zamówienia</h2>
+            <p id="summaryContent"></p>
+        </div>
     </div>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
@@ -103,6 +109,29 @@
                     });
                 })
                 .catch(error => console.error('Błąd wczytywania menu:', error));
+
+            // Dodaj event listener do przycisku zamów
+            document.getElementById('orderForm').addEventListener('submit', function(event) {
+                event.preventDefault(); // Zapobiegaj domyślnej akcji formularza
+
+                const name = document.getElementById('name').value;
+                const className = document.getElementById('class').value;
+                const selectedCheckboxes = Array.from(document.querySelectorAll('#days input[type="checkbox"]:checked'));
+                const selectedDays = selectedCheckboxes.map(checkbox => checkbox.value).join(', ');
+                const totalAmount = document.getElementById('payment').value;
+
+                // Utwórz podsumowanie zamówienia
+                const summaryContent = `
+                    Imię i nazwisko dziecka: ${name}<br>
+                    Klasa: ${className}<br>
+                    Dni, w które dziecko je: ${selectedDays}<br>
+                    Kwota do zapłaty: ${totalAmount} PLN
+                `;
+                document.getElementById('summaryContent').innerHTML = summaryContent;
+
+                // Pokaż podsumowanie zamówienia
+                document.getElementById('summary').style.display = 'block';
+            });
         });
     </script>
 </body>
