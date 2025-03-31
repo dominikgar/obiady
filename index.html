@@ -125,19 +125,19 @@
                         throw new Error(`Błąd sieci! Status: ${response.status}`);
                     }
                     return response.text();
-                 })
+                })
                 .then(data => {
                     daysContainer.innerHTML = '';
                     const meals = data.split('\n').filter(line => line.trim() !== '');
 
                     if (meals.length === 0) {
-                         daysContainer.innerHTML = '<p>Nie udało się załadować menu lub plik jest pusty.</p>';
-                         return;
+                        daysContainer.innerHTML = '<p>Nie udało się załadować menu lub plik jest pusty.</p>';
+                        return;
                     }
 
                     meals.forEach((meal, index) => {
                         const mealTrimmed = meal.trim();
-                         // Sprawdzenie, czy linia zawiera co najmniej dwie części oddzielone spacją
+                        // Sprawdzenie, czy linia zawiera co najmniej dwie części oddzielone spacją
                         if (mealTrimmed.split(' ').length < 2) {
                             console.warn(`Pominięto linię w menu.txt o nieprawidłowym formacie: "${mealTrimmed}"`);
                             return; // Pomiń tę linię
@@ -172,17 +172,12 @@
                 const className = document.getElementById('class').value;
                 const selectedCheckboxes = Array.from(daysContainer.querySelectorAll('input[type="checkbox"]:checked'));
 
-                // --- ZMIANA TUTAJ ---
-                // Mapujemy zaznaczone checkboxy, dzielimy wartość po spacji i bierzemy drugi element (numer dnia)
-                // Dodano .filter(Boolean), aby usunąć potencjalne puste wpisy, jeśli split się nie powiedzie
                 const selectedDayNumbers = selectedCheckboxes
-                    .map(checkbox => checkbox.value.split(' ')[1]) // Pobierz drugi człon (numer dnia)
-                    .filter(Boolean) // Usuń puste wpisy (na wszelki wypadek)
-                    .join(', '); // Połącz przecinkami
+                    .map(checkbox => checkbox.value.split(' ')[0]) // Pobierz pierwszy człon (numer dnia)
+                    .join(', ');
 
                 const totalAmount = paymentInput.value;
 
-                // Zaktualizowano etykietę na "Wybrane dni (numery)"
                 const summaryText = `
                     Imię i nazwisko dziecka: <strong>${name}</strong><br>
                     Klasa: <strong>${className}</strong><br>
