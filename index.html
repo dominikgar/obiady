@@ -176,12 +176,17 @@
                     .map(checkbox => checkbox.value.split(' ')[0]) // Pobierz pierwszy człon (numer dnia)
                     .join(', ');
 
+                let selectedMonth = '';
+                if (selectedCheckboxes.length > 0) {
+                    selectedMonth = selectedCheckboxes[0].value.split(' ')[1]; // Pobierz nazwę miesiąca z pierwszego zaznaczonego dnia
+                }
+
                 const totalAmount = paymentInput.value;
 
                 const summaryText = `
                     Imię i nazwisko dziecka: <strong>${name}</strong><br>
                     Klasa: <strong>${className}</strong><br>
-                    Wybrane dni (numery): <strong>${selectedDayNumbers || 'Brak'}</strong><br>
+                    Wybrane dni (numery): <strong>${selectedDayNumbers || 'Brak'} ${selectedMonth || ''}</strong><br>
                     Kwota do zapłaty: <strong>${totalAmount} PLN</strong>
                 `;
                 summaryContentP.innerHTML = summaryText;
