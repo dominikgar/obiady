@@ -37,9 +37,15 @@
         .checkbox-group {
             display: flex;
             flex-direction: column;
+            margin-bottom: 20px; /* Dodano margines dla lepszego odstępu */
         }
         .checkbox-group label {
-            margin-bottom: 5px;
+            margin-bottom: 8px; /* Zmniejszono lekko margines dla checkboxów */
+            display: flex; /* Ułatwia wyrównanie checkboxa i tekstu */
+            align-items: center;
+        }
+        .checkbox-group input[type="checkbox"] {
+             margin-right: 8px; /* Odstęp między checkboxem a tekstem */
         }
         button {
             padding: 10px;
@@ -47,10 +53,19 @@
             color: #fff;
             border: none;
             border-radius: 5px;
-            cursor: pointer.
+            cursor: pointer; /* Poprawiono: usunięto kropkę */
         }
         button:hover {
-            background-color: #218838.
+            background-color: #218838; /* Poprawiono: usunięto kropkę */
+        }
+        #summary {
+            margin-top: 30px; /* Dodano odstęp przed podsumowaniem */
+            padding-top: 20px;
+            border-top: 1px solid #eee; /* Linia oddzielająca */
+        }
+        #summary h2 {
+            text-align: center;
+            margin-bottom: 15px;
         }
     </style>
 </head>
@@ -64,18 +79,14 @@
             <label for="class">Klasa:</label>
             <input type="text" id="class" name="class" required>
 
-            <label>Dni, w które dziecko je:</label>
+            <label>Wybierz dni:</label>
             <div class="checkbox-group" id="days">
-                <!-- Checkboxy będą dodane dynamicznie przez JavaScript -->
-            </div>
+                </div>
 
-            <label for="payment">Kwota do zapłaty:</label>
-            <input type="number" id="payment" name="payment" readonly>
-
-            <button type="submit">Zamów</button>
+            <label for="payment">Kwota do zapłaty (PLN):</label>
+            <input type="number" id="payment" name="payment" readonly step="0.01"> <button type="submit">Zamów</button>
         </form>
 
-        <!-- Podsumowanie zamówienia -->
         <div id="summary" style="display:none;">
             <h2>Podsumowanie Zamówienia</h2>
             <p id="summaryContent"></p>
@@ -83,20 +94,36 @@
     </div>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            const cenaPosilku = 13.50; // Definiujemy cenę jako stałą dla łatwiejszej zmiany
+
             fetch('menu.txt')
-                .then(response => response.text())
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.text();
+                 })
                 .then(data => {
                     const daysContainer = document.getElementById('days');
-                    const meals = data.split('\n');
+                    // Usuń ewentualne puste linie na końcu pliku
+                    const meals = data.split('\n').filter(line => line.trim() !== '');
+
+                    if (meals.length === 0) {
+                         daysContainer.innerHTML = '<p>Nie udało się załadować menu lub plik jest pusty.</p>';
+                         return;
+                    }
+
                     meals.forEach(meal => {
                         const checkbox = document.createElement('input');
                         checkbox.type = 'checkbox';
                         checkbox.name = 'days';
-                        checkbox.value = meal;
+                        checkbox.value = meal.trim(); // Usuń ewentualne białe znaki z początku/końca
+                        checkbox.id = 'day-' + meal.trim().replace(/\s+/g, '-'); // Unikalne ID dla label
 
                         const label = document.createElement('label');
+                        label.htmlFor = checkbox.id; // Powiązanie label z checkboxem
                         label.appendChild(checkbox);
-                        label.appendChild(document.createTextNode(meal));
+                        label.appendChild(document.createTextNode(" " + meal.trim())); // Dodaj spację przed tekstem
 
                         daysContainer.appendChild(label);
                     });
@@ -104,11 +131,14 @@
                     // Dodaj event listener do obliczania całkowitej kwoty
                     daysContainer.addEventListener('change', function() {
                         const selectedCheckboxes = Array.from(daysContainer.querySelectorAll('input[type="checkbox"]:checked'));
-                        const totalAmount = selectedCheckboxes.length * 13.50; // Zakładając, że każdy posiłek kosztuje 13.50 PLN
+                        const totalAmount = selectedCheckboxes.length * cenaPosilku;
                         document.getElementById('payment').value = totalAmount.toFixed(2);
                     });
                 })
-                .catch(error => console.error('Błąd wczytywania menu:', error));
+                .catch(error => {
+                    console.error('Błąd wczytywania menu:', error);
+                    document.getElementById('days').innerHTML = `<p style="color: red;">Wystąpił błąd podczas ładowania menu z pliku menu.txt. Sprawdź konsolę przeglądarki (F12) po więcej szczegółów.</p>`;
+                });
 
             // Dodaj event listener do przycisku zamów
             document.getElementById('orderForm').addEventListener('submit', function(event) {
@@ -117,15 +147,18 @@
                 const name = document.getElementById('name').value;
                 const className = document.getElementById('class').value;
                 const selectedCheckboxes = Array.from(document.querySelectorAll('#days input[type="checkbox"]:checked'));
-                const selectedDays = selectedCheckboxes.map(checkbox => checkbox.value.split(' ')).join(', ');
+
+                // Poprawiono sposób tworzenia listy wybranych dni
+                const selectedDays = selectedCheckboxes.map(checkbox => checkbox.value).join(', ');
                 const totalAmount = document.getElementById('payment').value;
 
                 // Utwórz podsumowanie zamówienia
+                // Usunięto sztywno wpisany miesiąc "kwietnia", zmieniono opis
                 const summaryContent = `
-                    Imię i nazwisko dziecka: ${name}<br>
-                    Klasa: ${className}<br>
-                    Dni, w które dziecko je: ${selectedDays} kwietnia<br>
-                    Kwota do zapłaty: ${totalAmount} PLN
+                    Imię i nazwisko dziecka: <strong>${name}</strong><br>
+                    Klasa: <strong>${className}</strong><br>
+                    Wybrane dni/posiłki: <strong>${selectedDays || 'Brak'}</strong><br>
+                    Kwota do zapłaty: <strong>${totalAmount} PLN</strong>
                 `;
                 document.getElementById('summaryContent').innerHTML = summaryContent;
 
