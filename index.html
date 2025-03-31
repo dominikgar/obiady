@@ -27,6 +27,7 @@
         }
         label {
             margin-bottom: 10px;
+            font-weight: bold;
         }
         input[type="text"], input[type="number"] {
             padding: 10px;
@@ -37,35 +38,43 @@
         .checkbox-group {
             display: flex;
             flex-direction: column;
-            margin-bottom: 20px; /* Dodano margines dla lepszego odstępu */
+            margin-bottom: 20px;
+            border: 1px solid #eee;
+            padding: 15px;
+            border-radius: 5px;
         }
         .checkbox-group label {
-            margin-bottom: 8px; /* Zmniejszono lekko margines dla checkboxów */
-            display: flex; /* Ułatwia wyrównanie checkboxa i tekstu */
+            margin-bottom: 8px;
+            display: flex;
             align-items: center;
+            font-weight: normal;
         }
         .checkbox-group input[type="checkbox"] {
-             margin-right: 8px; /* Odstęp między checkboxem a tekstem */
+             margin-right: 8px;
         }
         button {
-            padding: 10px;
+            padding: 12px;
             background-color: #28a745;
             color: #fff;
             border: none;
             border-radius: 5px;
-            cursor: pointer; /* Poprawiono: usunięto kropkę */
+            cursor: pointer;
+            font-size: 16px;
         }
         button:hover {
-            background-color: #218838; /* Poprawiono: usunięto kropkę */
+            background-color: #218838;
         }
         #summary {
-            margin-top: 30px; /* Dodano odstęp przed podsumowaniem */
+            margin-top: 30px;
             padding-top: 20px;
-            border-top: 1px solid #eee; /* Linia oddzielająca */
+            border-top: 1px solid #eee;
         }
         #summary h2 {
             text-align: center;
             margin-bottom: 15px;
+        }
+        #summary p {
+             line-height: 1.6;
         }
     </style>
 </head>
@@ -81,10 +90,13 @@
 
             <label>Wybierz dni:</label>
             <div class="checkbox-group" id="days">
-                </div>
+                <p>Ładowanie menu...</p>
+            </div>
 
             <label for="payment">Kwota do zapłaty (PLN):</label>
-            <input type="number" id="payment" name="payment" readonly step="0.01"> <button type="submit">Zamów</button>
+            <input type="number" id="payment" name="payment" value="0.00" readonly step="0.01">
+
+            <button type="submit">Zamów</button>
         </form>
 
         <div id="summary" style="display:none;">
@@ -94,18 +106,28 @@
     </div>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            const cenaPosilku = 13.50; // Definiujemy cenę jako stałą dla łatwiejszej zmiany
+            const cenaPosilku = 13.50;
+            const daysContainer = document.getElementById('days');
+            const paymentInput = document.getElementById('payment');
+            const orderForm = document.getElementById('orderForm');
+            const summaryDiv = document.getElementById('summary');
+            const summaryContentP = document.getElementById('summaryContent');
+
+            function calculateTotal() {
+                const selectedCheckboxes = Array.from(daysContainer.querySelectorAll('input[type="checkbox"]:checked'));
+                const totalAmount = selectedCheckboxes.length * cenaPosilku;
+                paymentInput.value = totalAmount.toFixed(2);
+            }
 
             fetch('menu.txt')
                 .then(response => {
                     if (!response.ok) {
-                        throw new Error(`HTTP error! status: ${response.status}`);
+                        throw new Error(`Błąd sieci! Status: ${response.status}`);
                     }
                     return response.text();
                  })
                 .then(data => {
-                    const daysContainer = document.getElementById('days');
-                    // Usuń ewentualne puste linie na końcu pliku
+                    daysContainer.innerHTML = '';
                     const meals = data.split('\n').filter(line => line.trim() !== '');
 
                     if (meals.length === 0) {
@@ -113,57 +135,62 @@
                          return;
                     }
 
-                    meals.forEach(meal => {
+                    meals.forEach((meal, index) => {
+                        const mealTrimmed = meal.trim();
+                         // Sprawdzenie, czy linia zawiera co najmniej dwie części oddzielone spacją
+                        if (mealTrimmed.split(' ').length < 2) {
+                            console.warn(`Pominięto linię w menu.txt o nieprawidłowym formacie: "${mealTrimmed}"`);
+                            return; // Pomiń tę linię
+                        }
+                        const checkboxId = 'day-' + index;
+
                         const checkbox = document.createElement('input');
                         checkbox.type = 'checkbox';
                         checkbox.name = 'days';
-                        checkbox.value = meal.trim(); // Usuń ewentualne białe znaki z początku/końca
-                        checkbox.id = 'day-' + meal.trim().replace(/\s+/g, '-'); // Unikalne ID dla label
+                        checkbox.value = mealTrimmed;
+                        checkbox.id = checkboxId;
 
                         const label = document.createElement('label');
-                        label.htmlFor = checkbox.id; // Powiązanie label z checkboxem
+                        label.htmlFor = checkboxId;
                         label.appendChild(checkbox);
-                        label.appendChild(document.createTextNode(" " + meal.trim())); // Dodaj spację przed tekstem
+                        label.appendChild(document.createTextNode(" " + mealTrimmed));
 
                         daysContainer.appendChild(label);
                     });
 
-                    // Dodaj event listener do obliczania całkowitej kwoty
-                    daysContainer.addEventListener('change', function() {
-                        const selectedCheckboxes = Array.from(daysContainer.querySelectorAll('input[type="checkbox"]:checked'));
-                        const totalAmount = selectedCheckboxes.length * cenaPosilku;
-                        document.getElementById('payment').value = totalAmount.toFixed(2);
-                    });
+                    daysContainer.addEventListener('change', calculateTotal);
                 })
                 .catch(error => {
                     console.error('Błąd wczytywania menu:', error);
-                    document.getElementById('days').innerHTML = `<p style="color: red;">Wystąpił błąd podczas ładowania menu z pliku menu.txt. Sprawdź konsolę przeglądarki (F12) po więcej szczegółów.</p>`;
+                    daysContainer.innerHTML = `<p style="color: red;">Wystąpił błąd podczas ładowania menu z pliku menu.txt. Sprawdź konsolę (F12).</p>`;
                 });
 
-            // Dodaj event listener do przycisku zamów
-            document.getElementById('orderForm').addEventListener('submit', function(event) {
-                event.preventDefault(); // Zapobiegaj domyślnej akcji formularza
+            orderForm.addEventListener('submit', function(event) {
+                event.preventDefault();
 
                 const name = document.getElementById('name').value;
                 const className = document.getElementById('class').value;
-                const selectedCheckboxes = Array.from(document.querySelectorAll('#days input[type="checkbox"]:checked'));
+                const selectedCheckboxes = Array.from(daysContainer.querySelectorAll('input[type="checkbox"]:checked'));
 
-                // Poprawiono sposób tworzenia listy wybranych dni
-                const selectedDays = selectedCheckboxes.map(checkbox => checkbox.value).join(', ');
-                const totalAmount = document.getElementById('payment').value;
+                // --- ZMIANA TUTAJ ---
+                // Mapujemy zaznaczone checkboxy, dzielimy wartość po spacji i bierzemy drugi element (numer dnia)
+                // Dodano .filter(Boolean), aby usunąć potencjalne puste wpisy, jeśli split się nie powiedzie
+                const selectedDayNumbers = selectedCheckboxes
+                    .map(checkbox => checkbox.value.split(' ')[1]) // Pobierz drugi człon (numer dnia)
+                    .filter(Boolean) // Usuń puste wpisy (na wszelki wypadek)
+                    .join(', '); // Połącz przecinkami
 
-                // Utwórz podsumowanie zamówienia
-                // Usunięto sztywno wpisany miesiąc "kwietnia", zmieniono opis
-                const summaryContent = `
+                const totalAmount = paymentInput.value;
+
+                // Zaktualizowano etykietę na "Wybrane dni (numery)"
+                const summaryText = `
                     Imię i nazwisko dziecka: <strong>${name}</strong><br>
                     Klasa: <strong>${className}</strong><br>
-                    Wybrane dni/posiłki: <strong>${selectedDays || 'Brak'}</strong><br>
+                    Wybrane dni (numery): <strong>${selectedDayNumbers || 'Brak'}</strong><br>
                     Kwota do zapłaty: <strong>${totalAmount} PLN</strong>
                 `;
-                document.getElementById('summaryContent').innerHTML = summaryContent;
-
-                // Pokaż podsumowanie zamówienia
-                document.getElementById('summary').style.display = 'block';
+                summaryContentP.innerHTML = summaryText;
+                summaryDiv.style.display = 'block';
             });
         });
     </script>
