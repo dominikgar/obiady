@@ -119,7 +119,7 @@
                 paymentInput.value = totalAmount.toFixed(2);
             }
 
-            fetch('menu.txt')
+            fetch('menu.txt?ts=' + Date.now(), { cache: 'no-store' })
                 .then(response => {
                     if (!response.ok) {
                         throw new Error(`Błąd sieci! Status: ${response.status}`);
